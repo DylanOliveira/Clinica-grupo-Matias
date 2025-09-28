@@ -55,12 +55,56 @@ CREATE TABLE atendimentos (
 );
 
 
+CREATE TABLE atendimento_procedimento (
+    id_atendimento INT NOT NULL,
+    id_procedimento INT NOT NULL,
+    PRIMARY KEY (id_atendimento, id_procedimento),
+    FOREIGN KEY (id_atendimento) REFERENCES atendimentos(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_procedimento) REFERENCES procedimentos(id)
+);
+
+
 -- Exemplo de dados usarios:
 INSERT INTO usuarios (nome, email, senha, tipo) VALUES
 ('Ana Souza', 'ana.souza@email.com', '123456', 'admin'),
 ('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'default');
 
-SELECT * FROM usuarios;
+-- Exemplo de pacientes:
+INSERT INTO pacientes (nome, cpf, telefone, email) VALUES
+('João Silva', '123.456.789-00', '11999990001', 'joao.silva@email.com'),
+('Maria Oliveira', '987.654.321-00', '11999990002', 'maria.oliveira@email.com'),
+('Carlos Souza', '456.789.123-00', '11999990003', 'carlos.souza@email.com');
 
+-- Exemplo de procedimentos:
+INSERT INTO procedimentos (nome, descricao, valor_plano, valor_particular) VALUES
+('Consulta Geral', 'Consulta médica geral para avaliação inicial', 100.00, 150.00),
+('Exame de Sangue', 'Coleta e análise laboratorial de sangue', 80.00, 120.00),
+('Raio-X', 'Exame de imagem de raio-X', 150.00, 200.00);
+
+
+-- Exemplo de Atendimento
+
+INSERT INTO atendimentos (id_paciente, id_usuario, data_hora, tipo, numero_carteira, valor_total) VALUES
+(1, 1, '2025-09-28 09:00:00', 'plano', 'PLANO123', 180.00);
+
+INSERT INTO atendimentos (id_paciente, id_usuario, data_hora, tipo, numero_carteira, valor_total) VALUES
+(2, 2, '2025-09-28 10:30:00', 'particular', NULL, 270.00);
+
+
+-- Relação de procedimentos e atendimentos
+INSERT INTO atendimento_procedimento (id_atendimento, id_procedimento) VALUES
+(1, 1),
+(1, 2);
+
+INSERT INTO atendimento_procedimento (id_atendimento, id_procedimento) VALUES
+(2, 1),
+(2, 3);
+
+
+SELECT * FROM usuarios;
+SELECT * FROM pacientes;
+SELECT * FROM procedimentos;
+SELECT * FROM atendimentos;
+SELECT * FROM atendimento_procedimento;
 
 
