@@ -1,0 +1,43 @@
+CREATE DATABASE clinica_db;
+USE clinica_db;
+
+-- Gestão de usuario/funcionarios
+CREATE TABLE usuarios (
+id INT AUTO_INCREMENT PRIMARY KEY,
+nome VARCHAR(100) NOT NULL,
+email VARCHAR(100) NOT NULL UNIQUE,
+senha VARCHAR(200) NOT NULL,
+tipo ENUM('admin','default') NOT NULL
+);
+
+
+-- Gestão de pacientes/clientes
+CREATE TABLE pacientes (
+id INT AUTO_INCREMENT PRIMARY KEY,
+cpf VARCHAR(15) NOT NULL UNIQUE,
+nome VARCHAR(100) NOT NULL,
+telefone VARCHAR(20) NOT NULL,
+email VARCHAR(150) NOT NULL UNIQUE,
+data_nasc DATE,
+
+estado VARCHAR(50) NOT NULL,
+cidade VARCHAR(100) NOT NULL,
+bairro VARCHAR(100) NOT NULL,
+cep VARCHAR(10) NOT NULL,
+rua VARCHAR(100) NOT NULL,
+
+-- Caso paciente tenha responsavel
+cpf_respon VARCHAR(15),
+nome_respon VARCHAR(100),
+data_nasc_respon DATE,
+email_respon VARCHAR(100),
+telefone_respon VARCHAR(20)
+);
+
+
+-- Exemplo de dados usarios:
+INSERT INTO usuarios (nome, email, senha, tipo) VALUES
+('Ana Souza', 'ana.souza@email.com', '123456', 'admin'),
+('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'default');
+
+SELECT * FROM usuarios;
