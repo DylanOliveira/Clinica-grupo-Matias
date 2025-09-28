@@ -34,6 +34,26 @@ email_respon VARCHAR(100),
 telefone_respon VARCHAR(20)
 );
 
+CREATE TABLE procedimentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE,
+    descricao TEXT NOT NULL,
+    valor_plano DECIMAL(10,2) NOT NULL,
+    valor_particular DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE atendimentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_paciente INT NOT NULL,
+    id_usuario INT NOT NULL,
+    data_hora DATETIME NOT NULL,
+    tipo ENUM('plano','particular') NOT NULL,
+    numero_carteira VARCHAR(50),
+    valor_total DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+);
+
 
 -- Exemplo de dados usarios:
 INSERT INTO usuarios (nome, email, senha, tipo) VALUES
@@ -41,3 +61,6 @@ INSERT INTO usuarios (nome, email, senha, tipo) VALUES
 ('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'default');
 
 SELECT * FROM usuarios;
+
+
+
