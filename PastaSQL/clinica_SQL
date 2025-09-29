@@ -7,7 +7,7 @@ id INT AUTO_INCREMENT PRIMARY KEY,
 nome VARCHAR(100) NOT NULL,
 email VARCHAR(100) NOT NULL UNIQUE,
 senha VARCHAR(200) NOT NULL,
-tipo ENUM('admin','padrão') NOT NULL
+tipo ENUM('admin','padrao') NOT NULL
 );
 
 
@@ -60,20 +60,32 @@ CREATE TABLE atendimento_procedimento (
     id_procedimento INT NOT NULL,
     PRIMARY KEY (id_atendimento, id_procedimento),
     FOREIGN KEY (id_atendimento) REFERENCES atendimentos(id) ON DELETE CASCADE,
-    FOREIGN KEY (id_procedimento) REFERENCES procedimentos(id)
+    FOREIGN KEY (id_procedimento) REFERENCES procedimentos(id) ON DELETE CASCADE
 );
 
 
 -- Exemplo de dados usarios:
 INSERT INTO usuarios (nome, email, senha, tipo) VALUES
 ('Ana Souza', 'ana.souza@email.com', '123456', 'admin'),
-('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'padrão');
+('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'padrao');
 
 -- Exemplo de pacientes:
-INSERT INTO pacientes (nome, cpf, telefone, email) VALUES
-('João Silva', '123.456.789-00', '11999990001', 'joao.silva@email.com'),
-('Maria Oliveira', '987.654.321-00', '11999990002', 'maria.oliveira@email.com'),
-('Carlos Souza', '456.789.123-00', '11999990003', 'carlos.souza@email.com');
+INSERT INTO pacientes 
+(nome, cpf, telefone, email, data_nasc, estado, cidade, bairro, cep, rua, 
+ cpf_respon, nome_respon, data_nasc_respon, email_respon, telefone_respon) 
+VALUES
+('João Silva', '12345678900', '11999990001', 'joao.silva@email.com', '1990-05-15',
+ 'SP', 'São Paulo', 'Centro', '01000-000', 'Rua das Flores, 123',
+ NULL, NULL, NULL, NULL, NULL),
+
+('Maria Oliveira', '98765432100', '11999990002', 'maria.oliveira@email.com', '1985-11-22',
+ 'RJ', 'Rio de Janeiro', 'Copacabana', '22000-000', 'Av. Atlântica, 456',
+ NULL, NULL, NULL, NULL, NULL),
+
+('Carlos Souza', '45678912300', '11999990003', 'carlos.souza@email.com', '2000-03-10',
+ 'MG', 'Belo Horizonte', 'Savassi', '30100-000', 'Rua da Liberdade, 789',
+ '11122233344', 'José Souza', '1970-08-05', 'jose.souza@email.com', '31988887777');
+
 
 -- Exemplo de procedimentos:
 INSERT INTO procedimentos (nome, descricao, valor_plano, valor_particular) VALUES
@@ -106,5 +118,6 @@ SELECT * FROM pacientes;
 SELECT * FROM procedimentos;
 SELECT * FROM atendimentos;
 SELECT * FROM atendimento_procedimento;
+DROP DATABASE clinica_db;
 
 
