@@ -7,7 +7,7 @@ id INT AUTO_INCREMENT PRIMARY KEY,
 nome VARCHAR(100) NOT NULL,
 email VARCHAR(100) NOT NULL UNIQUE,
 senha VARCHAR(200) NOT NULL,
-tipo ENUM('admin','default') NOT NULL
+tipo ENUM('admin','padrão') NOT NULL
 );
 
 
@@ -67,7 +67,7 @@ CREATE TABLE atendimento_procedimento (
 -- Exemplo de dados usarios:
 INSERT INTO usuarios (nome, email, senha, tipo) VALUES
 ('Ana Souza', 'ana.souza@email.com', '123456', 'admin'),
-('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'default');
+('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'padrão');
 
 -- Exemplo de pacientes:
 INSERT INTO pacientes (nome, cpf, telefone, email) VALUES
