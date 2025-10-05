@@ -1,4 +1,4 @@
-package controller;
+package br.edu.clinica.controller;
 
 
 import br.edu.clinica.dto.LoginRequest;
@@ -25,4 +25,5 @@ public class AuthController {
         return ResponseEntity.ok("Login OK - token será gerado depois");
     }
 }
+
 
