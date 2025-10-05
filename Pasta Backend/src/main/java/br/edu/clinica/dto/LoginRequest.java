@@ -1,4 +1,4 @@
-package dto;
+package br.edu.clinica.dto;
 
 public class LoginRequest {
     private String email;
