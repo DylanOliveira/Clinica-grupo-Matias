@@ -34,7 +34,7 @@ class Paciente(db.Model):
     bairro = db.Column(db.String(100), nullable=False)
     cep = db.Column(db.String(10), nullable=False)
     rua = db.Column(db.String(100), nullable=False)
-    # opcional: numero do endereço
+    
     numero = db.Column(db.String(20), nullable=True)
 
     cpf_respon = db.Column(db.String(15))
