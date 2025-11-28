@@ -1,3 +1,6 @@
+-- Banco de dados: MySQL
+
+
 CREATE DATABASE clinica_db;
 USE clinica_db;
 
