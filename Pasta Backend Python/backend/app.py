@@ -22,6 +22,8 @@ def create_app():
     from routes.procedimentos import bp as procedimentos_bp
     from routes.atendimentos import bp as atendimentos_bp
 
+    
+    #Importações de blueprints para organização
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(users_bp, url_prefix="/users")
     app.register_blueprint(pacientes_bp, url_prefix="/pacientes")
