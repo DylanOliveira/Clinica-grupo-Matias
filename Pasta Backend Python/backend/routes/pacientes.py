@@ -64,11 +64,11 @@ def update_paciente(paciente_id):
     p = Paciente.query.get_or_404(paciente_id)
     if "cpf" in data and data["cpf"] != p.cpf:
         if Paciente.query.filter_by(cpf=data["cpf"]).first():
-            return jsonify({"msg":"CPF já cadastrado"}), 400
+            return jsonify({"msg":"CPF já cadastrado"}), 400 #Verificação de repetição de CPF
         p.cpf = data["cpf"]
     if "email" in data and data["email"] != p.email:
         if Paciente.query.filter_by(email=data["email"]).first():
-            return jsonify({"msg":"Email já cadastrado"}), 400
+            return jsonify({"msg":"Email já cadastrado"}), 400 #Verificação de repetição de email
         p.email = data["email"]
     for field in ("nome","telefone","estado","cidade","bairro","cep","rua","numero","cpf_respon","nome_respon","email_respon","telefone_respon"):
         if field in data:
