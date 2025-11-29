@@ -45,6 +45,7 @@ class Paciente(db.Model):
 
     atendimentos = db.relationship("Atendimento", backref="paciente", lazy=True)
 
+    #Verificação de menor de idade
     def is_menor(self):
         if not self.data_nasc:
             return False
