@@ -45,6 +45,15 @@ class Paciente(db.Model):
 
     atendimentos = db.relationship("Atendimento", backref="paciente", lazy=True)
 
+    # Verifica idade de um responsável
+def calcular_idade(data_nasc):
+    from datetime import date
+    if not data_nasc:
+        return None
+    hoje = date.today()
+    return hoje.year - data_nasc.year - ((hoje.month, hoje.day) < (data_nasc.month, data_nasc.day))
+
+
     #Verificação de menor de idade
     def is_menor(self):
         if not self.data_nasc:
