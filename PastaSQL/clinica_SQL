@@ -1,50 +1,67 @@
 -- Banco de dados: MySQL
 
 
-CREATE DATABASE clinica_db;
+DROP DATABASE IF EXISTS clinica_db;
+CREATE DATABASE clinica_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE clinica_db;
 
--- Gestão de usuario/funcionarios
+-- Tabela de usuários
 CREATE TABLE usuarios (
-id INT AUTO_INCREMENT PRIMARY KEY,
-nome VARCHAR(100) NOT NULL,
-email VARCHAR(100) NOT NULL UNIQUE,
-senha VARCHAR(200) NOT NULL,
-tipo ENUM('admin','padrao') NOT NULL
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha_hash VARCHAR(200) NOT NULL,
+    tipo ENUM('admin','padrao') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabela de responsáveis 
+CREATE TABLE responsaveis (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cpf VARCHAR(15) NOT NULL UNIQUE,
+    nome VARCHAR(100) NOT NULL,
+    data_nasc DATE,
+    email VARCHAR(100),
+    telefone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Gestão de pacientes/clientes
+-- Tabela de pacientes
 CREATE TABLE pacientes (
-id INT AUTO_INCREMENT PRIMARY KEY,
-cpf VARCHAR(15) NOT NULL UNIQUE,
-nome VARCHAR(100) NOT NULL,
-telefone VARCHAR(20) NOT NULL,
-email VARCHAR(150) NOT NULL UNIQUE,
-data_nasc DATE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cpf VARCHAR(15) NOT NULL UNIQUE,
+    nome VARCHAR(100) NOT NULL,
+    telefone VARCHAR(20) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    data_nasc DATE,
+    estado VARCHAR(50) NOT NULL,
+    cidade VARCHAR(100) NOT NULL,
+    bairro VARCHAR(100) NOT NULL,
+    cep VARCHAR(10) NOT NULL,
+    rua VARCHAR(100) NOT NULL,
+    numero VARCHAR(20),
+    responsavel_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_paciente_responsavel FOREIGN KEY (responsavel_id) REFERENCES responsaveis(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-estado VARCHAR(50) NOT NULL,
-cidade VARCHAR(100) NOT NULL,
-bairro VARCHAR(100) NOT NULL,
-cep VARCHAR(10) NOT NULL,
-rua VARCHAR(100) NOT NULL,
-
--- Caso paciente tenha responsavel
-cpf_respon VARCHAR(15),
-nome_respon VARCHAR(100),
-data_nasc_respon DATE,
-email_respon VARCHAR(100),
-telefone_respon VARCHAR(20)
-);
-
+-- Tabela de procedimentos
 CREATE TABLE procedimentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,
     descricao TEXT NOT NULL,
     valor_plano DECIMAL(10,2) NOT NULL,
-    valor_particular DECIMAL(10,2) NOT NULL
-);
+    valor_particular DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabela de atendimentos
 CREATE TABLE atendimentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_paciente INT NOT NULL,
@@ -52,75 +69,39 @@ CREATE TABLE atendimentos (
     data_hora DATETIME NOT NULL,
     tipo ENUM('plano','particular') NOT NULL,
     numero_carteira VARCHAR(50),
-    valor_total DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (id_paciente) REFERENCES pacientes(id),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
-);
+    valor_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_atendimento_paciente FOREIGN KEY (id_paciente) REFERENCES pacientes(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_atendimento_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+-- Tabela pivot many-to-many atendimento <-> procedimento
 CREATE TABLE atendimento_procedimento (
     id_atendimento INT NOT NULL,
     id_procedimento INT NOT NULL,
     PRIMARY KEY (id_atendimento, id_procedimento),
-    FOREIGN KEY (id_atendimento) REFERENCES atendimentos(id) ON DELETE CASCADE,
-    FOREIGN KEY (id_procedimento) REFERENCES procedimentos(id) ON DELETE CASCADE
-);
+    CONSTRAINT fk_ap_atendimento FOREIGN KEY (id_atendimento) REFERENCES atendimentos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_ap_procedimento FOREIGN KEY (id_procedimento) REFERENCES procedimentos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Índices úteis
+CREATE INDEX idx_pacientes_nome ON pacientes(nome);
+CREATE INDEX idx_procedimentos_nome ON procedimentos(nome);
+CREATE INDEX idx_atendimentos_datahora ON atendimentos(data_hora);
 
--- Exemplo de dados usarios:
-INSERT INTO usuarios (nome, email, senha, tipo) VALUES
-('Ana Souza', 'ana.souza@email.com', '123456', 'admin'),
-('Carlos Oliveira', 'carlos.oliveira@email.com', 'senha123', 'padrao');
-
--- Exemplo de pacientes:
-INSERT INTO pacientes 
-(nome, cpf, telefone, email, data_nasc, estado, cidade, bairro, cep, rua, 
- cpf_respon, nome_respon, data_nasc_respon, email_respon, telefone_respon) 
+-- procedimento de teste
+INSERT INTO procedimentos (nome, descricao, valor_plano, valor_particular)
 VALUES
-('João Silva', '12345678900', '11999990001', 'joao.silva@email.com', '1990-05-15',
- 'SP', 'São Paulo', 'Centro', '01000-000', 'Rua das Flores, 123',
- NULL, NULL, NULL, NULL, NULL),
-
-('Maria Oliveira', '98765432100', '11999990002', 'maria.oliveira@email.com', '1985-11-22',
- 'RJ', 'Rio de Janeiro', 'Copacabana', '22000-000', 'Av. Atlântica, 456',
- NULL, NULL, NULL, NULL, NULL),
-
-('Carlos Souza', '45678912300', '11999990003', 'carlos.souza@email.com', '2000-03-10',
- 'MG', 'Belo Horizonte', 'Savassi', '30100-000', 'Rua da Liberdade, 789',
- '11122233344', 'José Souza', '1970-08-05', 'jose.souza@email.com', '31988887777');
-
-
--- Exemplo de procedimentos:
-INSERT INTO procedimentos (nome, descricao, valor_plano, valor_particular) VALUES
-('Consulta Geral', 'Consulta médica geral para avaliação inicial', 100.00, 150.00),
-('Exame de Sangue', 'Coleta e análise laboratorial de sangue', 80.00, 120.00),
-('Raio-X', 'Exame de imagem de raio-X', 150.00, 200.00);
-
-
--- Exemplo de Atendimento
-
-INSERT INTO atendimentos (id_paciente, id_usuario, data_hora, tipo, numero_carteira, valor_total) VALUES
-(1, 1, '2025-09-28 09:00:00', 'plano', 'PLANO123', 180.00);
-
-INSERT INTO atendimentos (id_paciente, id_usuario, data_hora, tipo, numero_carteira, valor_total) VALUES
-(2, 2, '2025-09-28 10:30:00', 'particular', NULL, 270.00);
-
-
--- Relação de procedimentos e atendimentos
-INSERT INTO atendimento_procedimento (id_atendimento, id_procedimento) VALUES
-(1, 1),
-(1, 2);
-
-INSERT INTO atendimento_procedimento (id_atendimento, id_procedimento) VALUES
-(2, 1),
-(2, 3);
-
-
-SELECT * FROM usuarios;
-SELECT * FROM pacientes;
-SELECT * FROM procedimentos;
-SELECT * FROM atendimentos;
-SELECT * FROM atendimento_procedimento;
-DROP DATABASE clinica_db;
+('Consulta Geral', 'Consulta clínica geral', 50.00, 120.00),
+('Terapia X', 'Sessão de terapia X', 30.00, 90.00);
 
 
