@@ -6,7 +6,6 @@ from datetime import datetime
 
 bp = Blueprint("pacientes", __name__, url_prefix="/pacientes")
 
-
 def parse_date(value):
     if not value:
         return None
@@ -20,25 +19,24 @@ def parse_date(value):
 @bp.route('/', methods=['POST'])
 @jwt_required()
 def create_paciente():
+    # verificação obrigatórios no create
     data = request.get_json() or {}
     required = ['cpf','nome','telefone','email','estado','cidade','bairro','cep','rua']
     if not all(k in data and data.get(k) for k in required):
         return jsonify({"msg":"Campos obrigatórios faltando"}), 400
 
-    # verificação de duplicidade
+    # checagem de duplicidade
     if Paciente.query.filter_by(cpf=data['cpf']).first():
         return jsonify({"msg":"CPF já cadastrado"}), 400
     if Paciente.query.filter_by(email=data['email']).first():
         return jsonify({"msg":"Email já cadastrado"}), 400
 
-    # tratamento de responsavel
+    # tratar responsavel
     responsavel_obj = None
     if data.get('responsavel'):
         r = data['responsavel']
-        
         if not all(k in r and r.get(k) for k in ('cpf','nome','data_nasc')):
             return jsonify({"msg":"Responsável precisa de cpf, nome e data_nasc"}), 400
-        
         responsavel_obj = Responsavel.query.filter_by(cpf=r['cpf']).first()
         if not responsavel_obj:
             responsavel_obj = Responsavel(
@@ -66,11 +64,10 @@ def create_paciente():
         responsavel=responsavel_obj
     )
 
-    # Verificação de menor, exigir responsável
+    # exigencia de menor de idade
     if pac.is_menor():
         if not pac.responsavel:
             return jsonify({"msg":"Paciente menor requer responsável"}), 400
-        
         if not pac.responsavel.data_nasc:
             return jsonify({"msg":"Data de nascimento do responsável é obrigatória"}), 400
         hoje = datetime.today().date()
@@ -87,16 +84,21 @@ def create_paciente():
 @bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
 def get_paciente(id):
+    # consulta de ID
     pac = Paciente.query.get_or_404(id)
     return jsonify(pac.to_dict()), 200
 
 @bp.route('/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_paciente(id):
+    
     pac = Paciente.query.get_or_404(id)
     data = request.get_json() or {}
+    required_update = ['cpf','nome','telefone','email','estado','cidade','bairro','cep','rua']
+    if not all(k in data and data.get(k) for k in required_update):
+        return jsonify({"msg":"Para atualizar, forneça todos os campos obrigatórios: cpf, nome, telefone, email, estado, cidade, bairro, cep, rua"}), 400
 
-    # Verificação de duplicidade CPF / email
+    # Verificaçãode de duplicidade CPF / email
     if 'cpf' in data and data['cpf'] != pac.cpf:
         if Paciente.query.filter_by(cpf=data['cpf']).first():
             return jsonify({"msg":"CPF já em uso"}), 400
@@ -114,21 +116,18 @@ def update_paciente(id):
             else:
                 setattr(pac, campo, data[campo])
 
-    # atualizar/atribuir responsável
+    # atualizar responsável
     if 'responsavel' in data:
         r = data['responsavel']
         if r is None:
-            
             pac.responsavel = None
         else:
-            
             if 'id' in r:
                 resp = Responsavel.query.get(r['id'])
                 if not resp:
                     return jsonify({"msg":"Responsável informado não existe"}), 400
                 pac.responsavel = resp
             else:
-                
                 resp = None
                 if r.get('cpf'):
                     resp = Responsavel.query.filter_by(cpf=r['cpf']).first()
@@ -146,7 +145,7 @@ def update_paciente(id):
                     db.session.flush()
                 pac.responsavel = resp
 
-    # Se for menor verificação que há responsável
+    # Verificação com menor com responsável
     if pac.is_menor():
         if not pac.responsavel:
             return jsonify({"msg":"Responsável obrigatório para menores"}), 400
@@ -163,44 +162,38 @@ def update_paciente(id):
 @bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_paciente(id):
-    pac = Paciente.query.get_or_404(id)
     # impedir exclusão se tiver atendimento
+    pac = Paciente.query.get_or_404(id)
     if Atendimento.query.filter_by(id_paciente=id).first():
         return jsonify({"msg":"Não é possível excluir paciente com atendimentos registrados"}), 400
     db.session.delete(pac)
     db.session.commit()
     return jsonify({"msg":"Paciente removido com sucesso"}), 200
 
-# Rota específica para remover responsável
 @bp.route('/<int:id>/responsavel', methods=['DELETE'])
 @jwt_required()
 def delete_responsavel(id):
+    #remoção de responsável 
     pac = Paciente.query.get_or_404(id)
     if not pac.responsavel:
         return jsonify({"msg":"Paciente não possui responsável"}), 404
-    
     if pac.is_menor():
         return jsonify({"msg":"Não é permitido remover responsável enquanto paciente for menor"}), 400
-    
     pac.responsavel = None
     db.session.commit()
     return jsonify({"msg":"Responsável desvinculado"}), 200
 
-# Listagem paginada de pacientes 
 @bp.route('/', methods=['GET'])
 @jwt_required()
 def list_pacientes():
-    
+    #paginação de pacientes
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     query = Paciente.query
-
-    
     if request.args.get('nome'):
         query = query.filter(Paciente.nome.ilike(f"%{request.args.get('nome')}%"))
     if request.args.get('cpf'):
         query = query.filter_by(cpf=request.args.get('cpf'))
-
     pag = query.paginate(page=page, per_page=per_page, error_out=False)
     items = [p.to_dict() for p in pag.items]
     return jsonify({
