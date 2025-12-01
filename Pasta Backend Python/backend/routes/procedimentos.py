@@ -1,17 +1,19 @@
+
 from flask import Blueprint, request, jsonify
 from models import Procedimento, AtendimentoProcedimento, db
 from utils import admin_required
 from flask_jwt_extended import jwt_required
 
-bp = Blueprint("procedimentos", __name__)
+bp = Blueprint("procedimentos", __name__, url_prefix="/procedimentos")
 
-@bp.route("/", methods=["POST"])
+@bp.route('/', methods=['POST'])
 @jwt_required()
 @admin_required
 def create_procedimento():
+    # proibição de duplicidade
     data = request.get_json() or {}
     required = ("nome","descricao","valor_plano","valor_particular")
-    if not all(k in data for k in required):
+    if not all(k in data and data.get(k) for k in required):
         return jsonify({"msg":"Campos obrigatórios faltando"}), 400
     if Procedimento.query.filter_by(nome=data["nome"]).first():
         return jsonify({"msg":"Procedimento com esse nome já existe"}), 400
@@ -25,16 +27,18 @@ def create_procedimento():
     db.session.commit()
     return jsonify({"msg":"Procedimento criado","id": p.id}), 201
 
-@bp.route("/<int:proc_id>", methods=["GET"])
+@bp.route('/<int:proc_id>', methods=['GET'])
 @jwt_required()
 def get_procedimento(proc_id):
+    # consulta por ID
     p = Procedimento.query.get_or_404(proc_id)
     return jsonify({"id":p.id,"nome":p.nome,"descricao":p.descricao,"valor_plano":str(p.valor_plano),"valor_particular":str(p.valor_particular)})
 
-@bp.route("/<int:proc_id>", methods=["PUT"])
+@bp.route('/<int:proc_id>', methods=['PUT'])
 @jwt_required()
 @admin_required
 def update_procedimento(proc_id):
+    # atualização e bloqueio de procedimento
     data = request.get_json() or {}
     p = Procedimento.query.get_or_404(proc_id)
     if "nome" in data and data["nome"] != p.nome:
@@ -47,14 +51,27 @@ def update_procedimento(proc_id):
     db.session.commit()
     return jsonify({"msg":"Procedimento atualizado"}), 200
 
-@bp.route("/<int:proc_id>", methods=["DELETE"])
+@bp.route('/<int:proc_id>', methods=['DELETE'])
 @jwt_required()
 @admin_required
 def delete_procedimento(proc_id):
-    # verificar uso em atendimentos
+    # sem remoção em atendimentos
     if AtendimentoProcedimento.query.filter_by(id_procedimento=proc_id).first():
         return jsonify({"msg":"Não é possível remover procedimento usado em atendimentos"}), 400
     p = Procedimento.query.get_or_404(proc_id)
     db.session.delete(p)
     db.session.commit()
     return jsonify({"msg":"Procedimento removido"}), 200
+
+@bp.route('/', methods=['GET'])
+@jwt_required()
+def list_procedimentos():
+    #paginação de procedimentos
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    query = Procedimento.query
+    if request.args.get('nome'):
+        query = query.filter(Procedimento.nome.ilike(f"%{request.args.get('nome')}%"))
+    pag = query.paginate(page=page, per_page=per_page, error_out=False)
+    items = [{"id":p.id,"nome":p.nome,"descricao":p.descricao,"valor_plano":str(p.valor_plano),"valor_particular":str(p.valor_particular)} for p in pag.items]
+    return jsonify({'total': pag.total,'page': pag.page,'per_page': pag.per_page,'items': items}), 200
