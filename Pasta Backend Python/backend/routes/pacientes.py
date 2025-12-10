@@ -19,7 +19,7 @@ def parse_date(value):
 @bp.route('/', methods=['POST'])
 @jwt_required()
 def create_paciente():
-    # verificação obrigatórios no create
+    # verificação de campos de dados do paciente
     data = request.get_json() or {}
     required = ['cpf','nome','telefone','email','estado','cidade','bairro','cep','rua']
     if not all(k in data and data.get(k) for k in required):
@@ -37,7 +37,7 @@ def create_paciente():
         r = data['responsavel']
         if not all(k in r and r.get(k) for k in ('cpf','nome','data_nasc')):
             return jsonify({"msg":"Responsável precisa de cpf, nome e data_nasc"}), 400
-        responsavel_obj = Responsavel.query.filter_by(cpf=r['cpf']).first()
+        responsavel_obj = Responsavel.query.filter_by(cpf=r['cpf']).first() #Identificação de CPF unico
         if not responsavel_obj:
             responsavel_obj = Responsavel(
                 cpf=r['cpf'],
@@ -84,11 +84,11 @@ def create_paciente():
 @bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
 def get_paciente(id):
-    # consulta de ID
+    
     pac = Paciente.query.get_or_404(id)
     return jsonify(pac.to_dict()), 200
 
-@bp.route('/<int:id>', methods=['PUT'])
+@bp.route('/<int:id>', methods=['PUT']) #Alteração de dados do paciente
 @jwt_required()
 def update_paciente(id):
     
